@@ -14,35 +14,27 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
     <style>
         :root {
-            /* Sizing */
             --cell-width: 65px;
             --cell-height: 80px;
             --header-height: 40px;
             --month-col-width: 80px;
-
-            /* Glass Theme */
             --glass-surface: rgba(255, 255, 255, 0.85);
             --glass-border: rgba(255, 255, 255, 0.6);
             --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            
-            /* Colors */
             --text-main: #1e293b;
             --grid-line: #cbd5e1;
             --accent: #6366f1;
-            
             --font-main: 'Noto Sans', sans-serif;
         }
 
         html, body {
             margin: 0; padding: 0;
-            width: 100vw;
-            /* CRITICAL FIX: Use dvh (Dynamic Viewport Height) for mobile browsers */
-            height: 100vh; 
-            height: 100dvh; 
-            overflow: hidden; /* Lock body, scroll wrapper */
+            width: 100vw; height: 100dvh; 
+            overflow: hidden;
         }
 
         body {
@@ -58,34 +50,31 @@
             overscroll-behavior: none;
         }
 
-        /* --- RESPONSIVE TOP BAR --- */
+        /* --- Top Bar --- */
         .top-bar {
-            flex: 0 0 auto; /* Don't shrink */
+            flex: 0 0 auto;
             padding: 15px 20px;
             background: rgba(255, 255, 255, 0.25);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(255,255,255,0.3);
             z-index: 2000;
             padding-top: max(15px, env(safe-area-inset-top)); 
-            
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            display: flex; flex-direction: column; gap: 12px;
         }
 
-        .top-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            gap: 10px;
+        .top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px; }
+        
+        h2 { 
+            margin: 0; 
+            font-size: 24px; 
+            font-weight: 800; 
+            color: #fff; 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.15); 
+            white-space: nowrap;
+            letter-spacing: -0.5px;
         }
 
-        h2 { margin: 0; font-size: 20px; font-weight: 700; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.2); white-space: nowrap;}
-
-        .controls { 
-            display: flex; gap: 8px; align-items: center;
-        }
+        .controls { display: flex; gap: 8px; align-items: center; }
 
         .filter-bar { 
             display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; width: 100%;
@@ -100,16 +89,17 @@
         }
         .filter-pill.inactive { background: rgba(0,0,0,0.3) !important; color: #ccc !important; }
 
-        button, select {
+        button, select, .btn-primary {
             font-family: var(--font-main); padding: 8px 12px; border-radius: 8px;
             border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.9);
             font-weight: 600; font-size: 13px; cursor: pointer;
             transition: all 0.2s; color: var(--text-main); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            height: 38px;
+            height: 38px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
         }
-        button:hover, select:hover { background: white; transform: translateY(-1px); }
+        button:hover, select:hover, .btn-primary:hover { background: white; transform: translateY(-1px); }
         .btn-primary { background: var(--accent) !important; color: white !important; border: none; }
         .btn-today { background: #f59e0b !important; color: white !important; border: none; }
+        .btn-preview { background: #334155 !important; color: white !important; border: none; padding: 0 16px;}
 
         .desktop-text { display: inline; }
         .mobile-icon { display: none; }
@@ -117,19 +107,17 @@
         @media (max-width: 600px) {
             .top-bar { padding: 12px 15px; }
             .top-row { flex-wrap: wrap; }
-            h2 { width: 100%; margin-bottom: 5px; }
-            .controls { width: 100%; display: grid; grid-template-columns: auto 1fr auto; }
+            h2 { width: 100%; margin-bottom: 5px; font-size: 20px;}
+            .controls { width: 100%; display: grid; grid-template-columns: auto 1fr auto auto; }
             #yearSelect { width: 100%; }
             .desktop-text { display: none; }
             .mobile-icon { display: inline; font-size: 18px; line-height: 1; }
-            .btn-primary { padding: 0 15px; display: flex; align-items: center; justify-content: center;}
+            .btn-primary { padding: 0 15px; }
         }
 
-        /* --- Calendar Container --- */
+        /* --- Calendar --- */
         .calendar-wrapper {
-            flex: 1; /* Fills remaining height */
-            overflow: auto; 
-            margin: 0 10px 10px 10px;
+            flex: 1; overflow: auto; margin: 0 10px 10px 10px;
             background: var(--glass-surface); backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border); border-radius: 16px;
             box-shadow: var(--glass-shadow); position: relative;
@@ -141,33 +129,29 @@
             grid-template-columns: var(--month-col-width) repeat(37, var(--cell-width)); 
             gap: 1px; background-color: var(--grid-line);
             width: max-content; min-width: 100%;
-            
-            /* FIX 2: Add padding at bottom so December isn't hidden by screen edge */
             padding-bottom: 5px; 
         }
 
-        /* --- FREEZE LOGIC --- */
+        /* Freeze Logic */
         .cell.month-label.header-row {
             position: sticky; top: 0; left: 0; z-index: 1000 !important;
             background-color: #fff !important; 
             border-right: 1px solid var(--grid-line); border-bottom: 1px solid var(--grid-line);
         }
         .cell.header-row {
-            position: sticky; top: 0; z-index: 900; 
-            height: var(--header-height); padding: 0;
+            position: sticky; top: 0; z-index: 900; height: var(--header-height); padding: 0;
             background-color: #e2e8f0 !important; font-weight: 700; font-size: 12px; color: #475569;
             align-items: center; justify-content: center;
             border-bottom: 1px solid var(--grid-line); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         .cell.month-label {
-            position: sticky; left: 0; z-index: 800; 
-            background-color: #f8fafc !important; 
+            position: sticky; left: 0; z-index: 800; background-color: #f8fafc !important; 
             display: flex; align-items: center; justify-content: center;
             font-weight: 700; font-size: 13px; color: #334155;
             border-right: 2px solid var(--grid-line); box-shadow: 2px 0 5px rgba(0,0,0,0.05);
         }
 
-        /* --- Standard Cell --- */
+        /* Cells */
         .cell {
             background-color: rgba(255, 255, 255, 0.4);
             height: var(--cell-height); box-sizing: border-box; padding-top: 22px;
@@ -179,16 +163,47 @@
         .is-today { background-color: #fff !important; box-shadow: inset 0 0 0 2px var(--accent); }
         .date-number { position: absolute; top: 4px; right: 5px; font-size: 11px; font-weight: 600; color: #64748b; }
 
-        /* Events */
+        /* --- EVENT SEAMLESS LOGIC (NEW) --- */
         .event-item {
             font-size: 10px; height: 18px; line-height: 18px; color: white;
             cursor: grab; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             padding: 0 5px; position: relative; z-index: 10; font-weight: 600;
-            margin-bottom: 1px; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            margin-bottom: 1px; 
+            /* White border separates events vertically */
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.8);
+            opacity: 1; /* Ensure no transparency so overlaps don't show */
         }
-        .evt-start { border-radius: 4px 0 0 4px; margin-left: 2px; }
-        .evt-end { border-radius: 0 4px 4px 0; margin-right: 2px; }
-        .evt-middle { margin-left: -1px; margin-right: -1px; width: calc(100% + 2px); opacity: 0.9; z-index: 11; }
+
+        /* Single Day: Round all corners */
+        .evt-single { border-radius: 4px; margin: 0 2px; }
+
+        /* Start: Round Left, Flat Right, Extend Right to cover gap */
+        .evt-start { 
+            border-radius: 4px 0 0 4px; 
+            margin-left: 2px; 
+            margin-right: -1px; /* Bridge the gap */
+            width: calc(100% - 1px); /* Adjust width */
+            padding-right: 0;
+        }
+
+        /* End: Flat Left, Round Right, Extend Left to cover gap */
+        .evt-end { 
+            border-radius: 0 4px 4px 0; 
+            margin-right: 2px; 
+            margin-left: -1px; /* Bridge the gap */
+            width: calc(100% - 1px);
+            padding-left: 0;
+        }
+
+        /* Middle: Flat both sides, Extend both ways */
+        .evt-middle { 
+            border-radius: 0; 
+            margin-left: -1px; 
+            margin-right: -1px; 
+            width: calc(100% + 2px); /* Stretch across cell + gaps */
+            z-index: 11; /* Sit slightly above to hide seams */
+        }
+        
         .dragging { opacity: 0.5; }
         .drag-over { background: rgba(99, 102, 241, 0.2); }
         .empty { background: transparent; border: none; }
@@ -203,9 +218,7 @@
             background: #fff; border-radius: 20px; width: 90%; max-width: 420px;
             box-shadow: 0 25px 50px rgba(0,0,0,0.3);
             display: flex; flex-direction: column; gap: 16px; padding: 25px; 
-            max-height: 85vh; overflow-y: auto;
-            /* Padding bottom for safe scrolling inside modal */
-            padding-bottom: 40px;
+            max-height: 85vh; overflow-y: auto; padding-bottom: 30px;
         }
         .modal h3 { margin: 0; color: #1e293b; font-size: 20px; }
         .input-group label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;}
@@ -217,22 +230,31 @@
         textarea { resize: vertical; min-height: 60px; }
         .row-inputs { display: flex; gap: 15px; } .row-inputs > div { flex: 1; }
         .btn-group { display: flex; gap: 12px; margin-top: 5px; justify-content: flex-end;}
-        .btn-group button { padding: 10px 20px; }
-
+        
         #catList { max-height: 150px; overflow-y: auto; background: #f1f5f9; padding: 10px; border-radius: 10px; margin-top: 10px;}
         .cat-row { display: flex; align-items: center; gap: 10px; padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 14px;}
-
-        /* Color Picker */
         .color-options { display: flex; gap: 12px; margin-top: 5px; flex-wrap: wrap; }
-        .swatch {
-            width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
-            border: 2px solid rgba(255,255,255,0.5); box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            position: relative; transition: transform 0.2s;
-        }
+        .swatch { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(255,255,255,0.5); box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative; transition: transform 0.2s; }
         .swatch:hover { transform: scale(1.15); }
         .swatch.selected { border-color: #333; transform: scale(1.1); }
         #newCatColor { position: absolute; opacity: 0; pointer-events: none; }
         .swatch.custom-picker { background: conic-gradient(red, orange, yellow, green, blue, indigo, violet, red); }
+
+        /* Preview Modal */
+        .preview-container {
+            width: 100%; max-height: 300px; overflow: auto;
+            border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;
+            display: flex; justify-content: center; background: #f1f5f9;
+        }
+        .preview-img { max-width: 100%; height: auto; display: block; }
+        .modal-btn-close { background: rgba(241, 245, 249, 0.8) !important; color: #475569 !important; border: 1px solid #cbd5e1 !important; box-shadow: none !important; }
+        .modal-btn-close:hover { background: #e2e8f0 !important; }
+        .modal-btn-download {
+            background: linear-gradient(135deg, var(--accent), #8b5cf6) !important;
+            color: white !important; border: none !important;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important; gap: 8px;
+        }
+        .modal-btn-download:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4) !important; }
 
     </style>
 </head>
@@ -240,7 +262,7 @@
 
     <div class="top-bar">
         <div class="top-row">
-            <h2 id="year-title">Planner</h2>
+            <h2 id="planner-title">Planner 2026</h2>
             <div class="controls">
                 <button class="btn-today" onclick="jumpToToday()">Today</button>
                 <select id="yearSelect" onchange="changeYear()">
@@ -248,6 +270,7 @@
                     <option value="2027">2027</option>
                     <option value="2028">2028</option>
                 </select>
+                <button class="btn-preview" onclick="captureCalendar()">Preview</button>
                 <button class="btn-primary" onclick="openCatModal()">
                     <span class="desktop-text">Category</span>
                     <span class="mobile-icon">+</span>
@@ -264,27 +287,16 @@
     <div class="modal-overlay" id="eventModal">
         <div class="modal">
             <h3 id="modalTitle">Event Details</h3>
-            
-            <div class="input-group">
-                <label>Event Title</label>
-                <input type="text" id="evtTitle" placeholder="Project launch, Trip, etc.">
-            </div>
-
+            <div class="input-group"><label>Event Title</label><input type="text" id="evtTitle"></div>
             <div class="row-inputs">
                 <div class="input-group"><label>Start</label><input type="date" id="evtStart"></div>
                 <div class="input-group"><label>End</label><input type="date" id="evtEnd"></div>
             </div>
-
             <div class="row-inputs">
                 <div class="input-group"><label>Time</label><input type="time" id="evtTime"></div>
                 <div class="input-group"><label>Category</label><select id="evtCategory"></select></div>
             </div>
-
-            <div class="input-group">
-                <label>Note / Details</label>
-                <textarea id="evtNote" rows="3" placeholder="Add description here..."></textarea>
-            </div>
-
+            <div class="input-group"><label>Note</label><textarea id="evtNote" rows="3"></textarea></div>
             <div class="btn-group">
                 <button style="background:#ef4444; color:white; border:none; margin-right:auto;" onclick="deleteEvent()" id="btnDelete">Delete</button>
                 <button onclick="closeModal('eventModal')">Cancel</button>
@@ -295,32 +307,40 @@
 
     <div class="modal-overlay" id="catModal">
         <div class="modal">
-            <h3>Manage Categories</h3>
-            <div class="input-group">
-                <label>Category Name</label>
-                <input type="text" id="newCatName" placeholder="e.g. Health, Finance...">
-            </div>
-            <div class="input-group">
-                <label>Choose Color</label>
-                <div class="color-options" id="colorSwatches"></div>
-                <input type="color" id="newCatColor" value="#6366f1">
-            </div>
-            <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="addCategory()">+ Add Category</button>
+            <h3>Categories</h3>
+            <div class="input-group"><label>Name</label><input type="text" id="newCatName"></div>
+            <div class="input-group"><label>Color</label><div class="color-options" id="colorSwatches"></div><input type="color" id="newCatColor" value="#6366f1"></div>
+            <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="addCategory()">+ Add</button>
             <div id="catList"></div>
             <div class="btn-group" style="margin-top:0;"><button onclick="closeModal('catModal')">Close</button></div>
         </div>
     </div>
 
+    <div class="modal-overlay" id="previewModal">
+        <div class="modal" style="max-width: 600px;">
+            <h3>Year Preview</h3>
+            <div class="preview-container" id="previewContainer">
+                <p style="padding:20px; color:#64748b;">Generating image...</p>
+            </div>
+            <div class="btn-group">
+                <button class="modal-btn-close" onclick="closeModal('previewModal')">Close</button>
+                <a id="downloadLink" class="btn-primary modal-btn-download">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download Image
+                </a>
+            </div>
+        </div>
+    </div>
+
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Error', err));
-            });
+            window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Error', err)); });
         }
 
+        // --- STATE ---
         let currentYear = 2026; 
-        let events = JSON.parse(localStorage.getItem('calEventsV18')) || [];
-        let categories = JSON.parse(localStorage.getItem('calCatsV18')) || [
+        let events = JSON.parse(localStorage.getItem('calEventsV22')) || [];
+        let categories = JSON.parse(localStorage.getItem('calCatsV22')) || [
             { id: 'c1', name: 'Work', color: '#6366f1' },
             { id: 'c2', name: 'Personal', color: '#10b981' },
             { id: 'c3', name: 'Trip', color: '#f59e0b' }
@@ -332,19 +352,16 @@
 
         const calendarEl = document.getElementById('calendar');
 
-        function init() {
-            renderFilters();
-            renderCalendar();
-            initColorPicker();
-        }
-
-        function changeYear() {
-            currentYear = parseInt(document.getElementById('yearSelect').value);
-            renderCalendar();
+        function init() { renderFilters(); renderCalendar(); initColorPicker(); }
+        function changeYear() { 
+            currentYear = parseInt(document.getElementById('yearSelect').value); 
+            renderCalendar(); 
         }
 
         function renderCalendar() {
-            document.getElementById('year-title').innerText = `${currentYear}`;
+            // Update Title
+            document.getElementById('planner-title').innerText = `Planner ${currentYear}`;
+            
             calendarEl.innerHTML = '';
             
             const today = new Date();
@@ -387,12 +404,24 @@
                             el.className = 'event-item';
                             el.draggable = true;
                             el.title = evt.title + (evt.note ? `\n\n${evt.note}` : ''); 
+                            
                             const isStart = evt.start === dateStr;
                             const isEnd = evt.end === dateStr;
-                            if (isStart) { el.classList.add('evt-start'); el.innerText = evt.title; }
-                            if (isEnd) el.classList.add('evt-end');
-                            if (!isStart && !isEnd) { el.classList.add('evt-middle'); el.innerHTML = "&nbsp;"; }
-                            else if (!isStart) el.innerHTML = "&nbsp;";
+
+                            // REFINED CORNER LOGIC
+                            if (isStart && isEnd) {
+                                el.classList.add('evt-single'); // New class for pill shape
+                                el.innerText = evt.title;
+                            } else if (isStart) { 
+                                el.classList.add('evt-start'); 
+                                el.innerText = evt.title; 
+                            } else if (isEnd) { 
+                                el.classList.add('evt-end'); 
+                            } else { 
+                                el.classList.add('evt-middle'); 
+                                el.innerHTML = "&nbsp;"; 
+                            }
+                            
                             el.ondragstart = (e) => handleDragStart(e, evt);
                             el.onclick = (e) => { e.stopPropagation(); openEventModal(null, evt); };
                             cell.appendChild(el);
@@ -412,20 +441,23 @@
             calendarEl.appendChild(div);
         }
 
+        // IMPROVED SORTING: Sort by Time, then Title, then ID to keep lines straight
         function getEventsForDay(dateStr) {
             let matches = events.filter(e => dateStr >= e.start && dateStr <= e.end);
-            matches.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+            matches.sort((a, b) => {
+                const timeA = a.time || '00:00';
+                const timeB = b.time || '00:00';
+                if(timeA !== timeB) return timeA.localeCompare(timeB);
+                if(a.title !== b.title) return a.title.localeCompare(b.title);
+                return a.id.localeCompare(b.id);
+            });
             return matches;
         }
 
         function jumpToToday() {
             const today = new Date();
             const y = today.getFullYear();
-            if(currentYear !== y) {
-                currentYear = y; 
-                document.getElementById('yearSelect').value = y;
-                renderCalendar();
-            }
+            if(currentYear !== y) { currentYear = y; document.getElementById('yearSelect').value = y; renderCalendar(); }
             setTimeout(() => {
                 const todayCell = document.querySelector('.is-today');
                 if(todayCell) todayCell.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
@@ -449,6 +481,38 @@
             if(activeFilters.includes(id)) activeFilters = activeFilters.filter(x => x !== id);
             else activeFilters.push(id);
             renderFilters(); renderCalendar();
+        }
+
+        function captureCalendar() {
+            const modal = document.getElementById('previewModal');
+            const container = document.getElementById('previewContainer');
+            const link = document.getElementById('downloadLink');
+            
+            modal.style.display = 'flex';
+            container.innerHTML = '<p style="padding:20px; color:#64748b;">Generating high-res capture...</p>';
+
+            const target = document.getElementById('calendar');
+
+            html2canvas(target, {
+                scale: 2, 
+                backgroundColor: "#f8fafc",
+                useCORS: true,
+                logging: false,
+                windowWidth: target.scrollWidth,
+                windowHeight: target.scrollHeight
+            }).then(canvas => {
+                const imgData = canvas.toDataURL("image/png");
+                container.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = imgData;
+                img.className = 'preview-img';
+                container.appendChild(img);
+                link.href = imgData;
+                link.download = `Planner_${currentYear}.png`;
+            }).catch(err => {
+                console.error(err);
+                container.innerText = "Error generating image.";
+            });
         }
 
         function handleDragStart(e, obj) { e.dataTransfer.setData('text', JSON.stringify(obj)); setTimeout(() => e.target.classList.add('dragging'), 0); }
@@ -580,8 +644,8 @@
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function saveData() { localStorage.setItem('calEventsV18', JSON.stringify(events)); }
-        function saveCats() { localStorage.setItem('calCatsV18', JSON.stringify(categories)); }
+        function saveData() { localStorage.setItem('calEventsV22', JSON.stringify(events)); }
+        function saveCats() { localStorage.setItem('calCatsV22', JSON.stringify(categories)); }
         function formatDate(y, m, d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
         function formatDateObj(d) { return d.toISOString().split('T')[0]; }
         window.onclick = (e) => { if(e.target.classList.contains('modal-overlay')) e.target.style.display = 'none'; }
