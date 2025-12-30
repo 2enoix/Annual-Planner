@@ -1,0 +1,20 @@
+{
+  "name": "𝔸𝕟𝕟𝕦𝕒𝕝 ℙ𝕝𝕒𝕟𝕟𝕖𝕣",
+  "short_name": "Planner",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#e0e7ff",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "https://i.pinimg.com/1200x/53/62/38/53623863f639f508f4044368e126d456.jpg",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://i.pinimg.com/1200x/53/62/38/53623863f639f508f4044368e126d456.jpg",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
